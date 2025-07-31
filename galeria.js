@@ -12,9 +12,13 @@
       .replace(/-+/g, "-");       // wielokrotne myślniki na jeden
   }
 
-  // Pobierz tytuł wpisu lub strony
-const title = document.querySelector("h1.entry-title")?.textContent.trim() || document.querySelector("h1")?.textContent.trim() || document.title.trim();
+  // Pobieramy tylko tekst z pierwszego <h1> na stronie
+  const title = document.querySelector("h1")?.textContent.trim() || "";
 
+  if (!title) {
+    container.textContent = "Nie znaleziono tytułu wpisu (element <h1>).";
+    return;
+  }
 
   const slug = createSlug(title);
 
@@ -22,7 +26,7 @@ const title = document.querySelector("h1.entry-title")?.textContent.trim() || do
 
   container.textContent = `Szukam galerii dla "${slug}"...`;
 
-  // Funkcja sprawdzająca, czy plik istnieje (HEAD request)
+  // Sprawdza, czy plik istnieje (HEAD)
   async function checkFileExists(url) {
     try {
       const resp = await fetch(url, { method: "HEAD" });
@@ -32,7 +36,6 @@ const title = document.querySelector("h1.entry-title")?.textContent.trim() || do
     }
   }
 
-  // Szukamy zdjęć od 1 do 20 z rozszerzeniami jpg i png
   const images = [];
   for (let i = 1; i <= 20; i++) {
     for (const ext of ["jpg", "png"]) {
@@ -66,7 +69,6 @@ const title = document.querySelector("h1.entry-title")?.textContent.trim() || do
     img.style.borderRadius = "8px";
     img.style.cursor = "pointer";
     img.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
-    // Kliknięcie otwiera obraz w nowej karcie
     img.addEventListener("click", () => {
       window.open(src, "_blank");
     });
