@@ -12,8 +12,6 @@
 
   container.innerHTML = "<p>Sprawdzam dostępność galerii...</p>";
 
-  // Sprawdzenie czy folder istnieje (sprawdzamy 1 plik jpg jako test)
-  const baseUrl = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/galerie/${slug}/`;
   async function exists(url) {
     try {
       const res = await fetch(url, { method: "HEAD" });
@@ -23,6 +21,7 @@
     }
   }
 
+  const baseUrl = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/galerie/${slug}/`;
   const testFile = `${baseUrl}1.jpg`;
   const folderExists = await exists(testFile);
 
@@ -61,5 +60,12 @@
 
   if (!foundAny) {
     container.innerHTML = `<p style="color:orange;">Folder galerii "<strong>${slug}</strong>" istnieje, ale nie znaleziono żadnych zdjęć.</p>`;
+  } else {
+    // Komunikat, że galeria została załadowana
+    const info = document.createElement("p");
+    info.style.color = "green";
+    info.style.marginTop = "10px";
+    info.textContent = "Galeria została załadowana pomyślnie.";
+    container.appendChild(info);
   }
 })();
