@@ -1,56 +1,54 @@
 (async () => {
-  const MAX_OBRAZKOW = 30;
+  // Pobiera <script> który ładuje ten skrypt
+  const scriptTag = document.currentScript;
+  const user = "EppcPL";        // Twój GitHub login
+  const repo = "SionGaleria";   // Twoje repozytorium
+  const branch = "main";        // gałąź repozytorium
 
-  // Wyczytaj login, repo i branch z <script src="...">
-  const scriptTag = document.currentScript || document.querySelector('script[src*="githubusercontent.com"]');
-  const match = scriptTag?.src.match(/https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/.+/);
+  // Pobierz tytuł wpisu i zrób z niego slug (małe litery, myślniki zamiast spacji)
+  const title = document.title || "brak-tytulu";
+  const slug = title.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^\w\-]/g, "");
 
-  if (!match) {
-    console.error("Nie można odczytać danych z URL skryptu.");
-    return;
-  }
+  const container = document.getElementById("galeria-z-githuba");
+  if (!container) return;
 
-  const [_, user, repo, branch] = match;
+  container.innerHTML = "<p>Ładowanie galerii...</p>";
 
-  // Pobierz tytuł wpisu
-  const h1 = document.querySelector("h1.entry-title");
-  if (!h1) return;
+  const baseUrl = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/galerie/${slug}/`;
+  const rozszerzenia = ['jpg', 'jpeg', 'png'];
+  const maxImages = 30; // maksymalna liczba obrazków do sprawdzenia
 
-  const tytul = h1.textContent.trim();
-  const slug = tytul
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9\-]/g, "");
+  container.innerHTML = ""; // wyczyść komunikat
 
-  const urlBaza = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/galerie/${slug}/`;
-  const kontener = document.getElementById("galeria-z-githuba");
-  kontener.innerHTML = `<p>Ładowanie galerii dla: <strong>${tytul}</strong>...</p>`;
-
-  let znaleziono = false;
-
-  for (let i = 1; i <= MAX_OBRAZKOW; i++) {
-    const url = `${urlBaza}${i}.jpg`;
-    try {
-      const res = await fetch(url, { method: "HEAD" });
-      if (res.ok) {
-        if (!znaleziono) {
-          kontener.innerHTML = "<div class='galeria'></div>";
-          znaleziono = true;
+  for (let i = 1; i <= maxImages; i++) {
+    let foundImage = false;
+    for (const ext of rozszerzenia) {
+      const url = `${baseUrl}${i}.${ext}`;
+      try {
+        const res = await fetch(url, { method: "HEAD" });
+        if (res.ok) {
+          // jeśli plik istnieje, dodaj go do galerii
+          const img = document.createElement("img");
+          img.src = url;
+          img.alt = `${slug} - zdjęcie ${i}`;
+          img.style.maxWidth = "150px";
+          img.style.margin = "5px";
+          img.style.borderRadius = "8px";
+          container.appendChild(img);
+          foundImage = true;
+          break; // przerwij sprawdzanie rozszerzeń dla tego numeru
         }
-        const img = document.createElement("img");
-        img.src = url;
-        img.alt = `Obraz ${i}`;
-        kontener.querySelector(".galeria").appendChild(img);
-      } else {
-        break;
+      } catch (e) {
+        // ignoruj błędy fetch
       }
-    } catch (err) {
-      console.error("Błąd ładowania:", url);
+    }
+    if (!foundImage) {
+      // jeśli nie znaleziono żadnego pliku dla tego numeru, zakończ pętlę
+      break;
     }
   }
 
-  if (!znaleziono) {
-    kontener.innerHTML = "<p>Brak galerii dla tego wpisu.</p>";
+  if (container.children.length === 0) {
+    container.innerHTML = "<p>Nie znaleziono żadnych zdjęć w galerii.</p>";
   }
 })();
