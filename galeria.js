@@ -13,9 +13,8 @@
   }
 
   // Pobierz tytuł wpisu lub strony
-  const title =
-    document.querySelector("h1.entry-title")?.textContent.trim() ||
-    document.title.trim();
+const title = document.querySelector("h1.entry-title")?.textContent.trim() || document.querySelector("h1")?.textContent.trim() || document.title.trim();
+
 
   const slug = createSlug(title);
 
