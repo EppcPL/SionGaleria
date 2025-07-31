@@ -6,27 +6,27 @@
 
   function createSlug(title) {
     return title.toLowerCase()
-      .replace(/[^\w\s-]/g, "")   // usuwa znaki inne niż litery, cyfry, spacje, myślniki
+      .replace(/[^\w\s-]/g, "")  // usuwa znaki inne niż litery, cyfry, spacje, myślniki
       .trim()
-      .replace(/\s+/g, "-")       // spacje na myślniki
-      .replace(/-+/g, "-");       // wielokrotne myślniki na jeden
+      .replace(/\s+/g, "-")      // spacje na myślniki
+      .replace(/-+/g, "-");      // wielokrotne myślniki na jeden
   }
 
-  // Pobieramy tylko tekst z pierwszego <h1> na stronie
-  const title = document.querySelector("h1")?.textContent.trim() || "";
+  // Pobierz tytuł wpisu lub strony
+  let rawTitle = document.querySelector("h1.entry-title")?.textContent.trim() || 
+                 document.querySelector("h1")?.textContent.trim() || 
+                 document.title.trim();
 
-  if (!title) {
-    container.textContent = "Nie znaleziono tytułu wpisu (element <h1>).";
-    return;
-  }
+  // Obcinamy wszystko po '--' razem z nimi
+  rawTitle = rawTitle.split('--')[0].trim();
 
-  const slug = createSlug(title);
+  const slug = createSlug(rawTitle);
 
   const baseUrl = "https://raw.githubusercontent.com/EppcPL/SionGaleria/main/galerie/";
 
   container.textContent = `Szukam galerii dla "${slug}"...`;
 
-  // Sprawdza, czy plik istnieje (HEAD)
+  // Funkcja sprawdzająca, czy plik istnieje (HEAD request)
   async function checkFileExists(url) {
     try {
       const resp = await fetch(url, { method: "HEAD" });
@@ -36,6 +36,7 @@
     }
   }
 
+  // Szukamy zdjęć od 1 do 20 z rozszerzeniami jpg i png
   const images = [];
   for (let i = 1; i <= 20; i++) {
     for (const ext of ["jpg", "png"]) {
@@ -43,7 +44,7 @@
       // eslint-disable-next-line no-await-in-loop
       if (await checkFileExists(url)) {
         images.push(url);
-        break; // jeśli znaleziono jpg, nie szukamy png dla tego numeru
+        break; // jeśli znaleziono jpg lub png, nie szukamy innych rozszerzeń dla tego numeru
       }
     }
   }
@@ -69,6 +70,7 @@
     img.style.borderRadius = "8px";
     img.style.cursor = "pointer";
     img.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+    // Kliknięcie otwiera obraz w nowej karcie
     img.addEventListener("click", () => {
       window.open(src, "_blank");
     });
