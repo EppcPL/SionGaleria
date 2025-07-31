@@ -1,14 +1,18 @@
 (async () => {
-  const scriptTag = document.currentScript;
+  const container = document.getElementById("galeria-z-githuba");
+  if (!container) return;
+
+  // Pobierz tytuł wpisu z h1.entry-title lub z pierwszego h1
+  const titleElement = document.querySelector('h1.entry-title') || document.querySelector('h1');
+  const title = titleElement ? titleElement.textContent.trim() : "brak-tytulu";
+
+  const slug = title.toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]/g, "");
+
   const user = "EppcPL";
   const repo = "SionGaleria";
   const branch = "main";
-
-  const title = document.title || "brak-tytulu";
-  const slug = title.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^\w\-]/g, "");
-
-  const container = document.getElementById("galeria-z-githuba");
-  if (!container) return;
 
   container.innerHTML = "<p>Sprawdzam dostępność galerii...</p>";
 
@@ -32,7 +36,7 @@
 
   container.innerHTML = "<p>Folder galerii znaleziony, ładuję zdjęcia...</p>";
 
-  const rozszerzenia = ['jpg', 'jpeg', 'png'];
+  const extensions = ['jpg', 'jpeg', 'png'];
   const maxImages = 30;
   container.innerHTML = "";
 
@@ -40,7 +44,7 @@
 
   for (let i = 1; i <= maxImages; i++) {
     let foundImage = false;
-    for (const ext of rozszerzenia) {
+    for (const ext of extensions) {
       const url = `${baseUrl}${i}.${ext}`;
       if (await exists(url)) {
         const img = document.createElement("img");
@@ -61,7 +65,6 @@
   if (!foundAny) {
     container.innerHTML = `<p style="color:orange;">Folder galerii "<strong>${slug}</strong>" istnieje, ale nie znaleziono żadnych zdjęć.</p>`;
   } else {
-    // Komunikat, że galeria została załadowana
     const info = document.createElement("p");
     info.style.color = "green";
     info.style.marginTop = "10px";
