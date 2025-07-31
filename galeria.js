@@ -1,74 +1,79 @@
+<div id="galeria-z-githuba">Ładowanie galerii...</div>
+
+<script>
 (async () => {
   const container = document.getElementById("galeria-z-githuba");
-  if (!container) return;
 
-  // Pobierz tytuł wpisu z h1.entry-title lub z pierwszego h1
-  const titleElement = document.querySelector('h1.entry-title') || document.querySelector('h1');
-  const title = titleElement ? titleElement.textContent.trim() : "brak-tytulu";
+  function createSlug(title) {
+    return title.toLowerCase()
+      .replace(/[^\w\s-]/g, "")   // usuwa znaki inne niż litery, cyfry, spacje, myślniki
+      .trim()
+      .replace(/\s+/g, "-")       // spacje na myślniki
+      .replace(/-+/g, "-");       // wielokrotne myślniki na jeden
+  }
 
-  const slug = title.toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\-]/g, "");
+  // Pobierz tytuł wpisu lub strony
+  const title =
+    document.querySelector("h1.entry-title")?.textContent.trim() ||
+    document.title.trim();
 
-  const user = "EppcPL";
-  const repo = "SionGaleria";
-  const branch = "main";
+  const slug = createSlug(title);
 
-  container.innerHTML = "<p>Sprawdzam dostępność galerii...</p>";
+  const baseUrl = "https://raw.githubusercontent.com/EppcPL/SionGaleria/main/galerie/";
 
-  async function exists(url) {
+  container.textContent = `Szukam galerii dla "${slug}"...`;
+
+  // Funkcja sprawdzająca, czy plik istnieje (HEAD request)
+  async function checkFileExists(url) {
     try {
-      const res = await fetch(url, { method: "HEAD" });
-      return res.ok;
+      const resp = await fetch(url, { method: "HEAD" });
+      return resp.ok;
     } catch {
       return false;
     }
   }
 
-  const baseUrl = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/galerie/${slug}/`;
-  const testFile = `${baseUrl}1.jpg`;
-  const folderExists = await exists(testFile);
+  // Szukamy zdjęć od 1 do 20 z rozszerzeniami jpg i png
+  const images = [];
+  for (let i = 1; i <= 20; i++) {
+    for (const ext of ["jpg", "png"]) {
+      const url = `${baseUrl}${slug}/${i}.${ext}`;
+      // eslint-disable-next-line no-await-in-loop
+      if (await checkFileExists(url)) {
+        images.push(url);
+        break; // jeśli znaleziono jpg, nie szukamy png dla tego numeru
+      }
+    }
+  }
 
-  if (!folderExists) {
-    container.innerHTML = `<p style="color:red;">Galeria dla "<strong>${slug}</strong>" nie istnieje (nie znaleziono folderu lub plików).</p>`;
+  if (images.length === 0) {
+    container.textContent = `Galeria dla "${slug}" nie istnieje (nie znaleziono folderu lub plików).`;
     return;
   }
 
-  container.innerHTML = "<p>Folder galerii znaleziony, ładuję zdjęcia...</p>";
+  // Tworzymy galerię
+  container.textContent = "";
+  const galleryDiv = document.createElement("div");
+  galleryDiv.style.display = "flex";
+  galleryDiv.style.flexWrap = "wrap";
+  galleryDiv.style.gap = "10px";
 
-  const extensions = ['jpg', 'jpeg', 'png'];
-  const maxImages = 30;
-  container.innerHTML = "";
+  images.forEach((src) => {
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = slug;
+    img.style.width = "150px";
+    img.style.height = "auto";
+    img.style.borderRadius = "8px";
+    img.style.cursor = "pointer";
+    img.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+    // Kliknięcie otwiera obraz w nowej karcie
+    img.addEventListener("click", () => {
+      window.open(src, "_blank");
+    });
+    galleryDiv.appendChild(img);
+  });
 
-  let foundAny = false;
-
-  for (let i = 1; i <= maxImages; i++) {
-    let foundImage = false;
-    for (const ext of extensions) {
-      const url = `${baseUrl}${i}.${ext}`;
-      if (await exists(url)) {
-        const img = document.createElement("img");
-        img.src = url;
-        img.alt = `${slug} - zdjęcie ${i}`;
-        img.style.maxWidth = "150px";
-        img.style.margin = "5px";
-        img.style.borderRadius = "8px";
-        container.appendChild(img);
-        foundImage = true;
-        foundAny = true;
-        break;
-      }
-    }
-    if (!foundImage) break;
-  }
-
-  if (!foundAny) {
-    container.innerHTML = `<p style="color:orange;">Folder galerii "<strong>${slug}</strong>" istnieje, ale nie znaleziono żadnych zdjęć.</p>`;
-  } else {
-    const info = document.createElement("p");
-    info.style.color = "green";
-    info.style.marginTop = "10px";
-    info.textContent = "Galeria została załadowana pomyślnie.";
-    container.appendChild(info);
-  }
+  container.appendChild(galleryDiv);
 })();
+</script>
